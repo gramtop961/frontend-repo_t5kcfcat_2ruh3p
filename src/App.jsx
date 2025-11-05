@@ -1,28 +1,58 @@
-import { useState } from 'react'
+import { useMemo, useState } from "react";
+import Header from "./components/Header";
+import Controls from "./components/Controls";
+import AnalyticsPanel from "./components/AnalyticsPanel";
+import CameraGrid from "./components/CameraGrid";
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [analyticsEnabled, setAnalyticsEnabled] = useState(true);
+  const [threshold, setThreshold] = useState(0.5);
+  const [selectedClasses, setSelectedClasses] = useState([]);
+  const [agg, setAgg] = useState(Array.from({ length: 16 }, () => 0));
+
+  function handleAggregate(id, n) {
+    setAgg((prev) => {
+      const next = [...prev];
+      next[id] = n;
+      return next;
+    });
+  }
+
+  const totalDetections = useMemo(() => agg.reduce((a, b) => a + b, 0), [agg]);
+
+  function toggleClass(c) {
+    setSelectedClasses((prev) => (prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c]));
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 flex items-center justify-center">
-      <div className="bg-white p-8 rounded-lg shadow-lg">
-        <h1 className="text-3xl font-bold text-gray-800 mb-4">
-          Vibe Coding Platform
-        </h1>
-        <p className="text-gray-600 mb-6">
-          Your AI-powered development environment
-        </p>
-        <div className="text-center">
-          <button
-            onClick={() => setCount(count + 1)}
-            className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded"
-          >
-            Count is {count}
-          </button>
-        </div>
-      </div>
+    <div className="min-h-screen bg-gray-50">
+      <Header onOpenSettings={() => alert("Settings panel can be extended.")} />
+      <Controls
+        analyticsEnabled={analyticsEnabled}
+        onToggleAnalytics={() => setAnalyticsEnabled((v) => !v)}
+        threshold={threshold}
+        onThresholdChange={setThreshold}
+        selectedClasses={selectedClasses}
+        onToggleClass={toggleClass}
+      />
+      <AnalyticsPanel
+        totalCameras={16}
+        analyticsEnabled={analyticsEnabled}
+        threshold={threshold}
+        selectedClasses={selectedClasses}
+        estimatedDetections={totalDetections}
+      />
+      <CameraGrid
+        analyticsEnabled={analyticsEnabled}
+        threshold={threshold}
+        selectedClasses={selectedClasses}
+        onAggregateDetections={handleAggregate}
+      />
+      <footer className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 text-center text-xs text-gray-500">
+        Built for real-time CCTV monitoring with simulated YOLO overlays. Integrate live streams and backend analytics when ready.
+      </footer>
     </div>
-  )
+  );
 }
 
-export default App
+export default App;
